@@ -105,7 +105,7 @@ write_next_seq_can_msg(int hnd, unsigned int sn)
   for (i = 2; i < dlc; i++)
     msg[i] = rand();
 
-  stat = canWrite (hnd, (id | 0) & 0x1fff, msg, dlc, canMSG_EXT * 0);
+  stat = canWrite (hnd, (id | 0) & 0x3ff, msg, dlc, canMSG_EXT * 0);
   check("canWrite seq msg std", stat);
 
   if (dlc < 2)
@@ -134,7 +134,7 @@ write_next_seq_can_msg_fd(int hnd, unsigned int sn)
   for (i = 2; i < dlc; i++)
     msg[i] = rand();
 
-  stat = canWrite (hnd, (id | 2) & 0x1fff, msg, dlc, canFDMSG_FDF);
+  stat = canWrite (hnd, (id | 2) & 0x3ff, msg, dlc, canFDMSG_FDF);
   check("canWrite seq msg std", stat);
 
   if (dlc < 2)
@@ -340,7 +340,7 @@ int main(int argc, char** argv)
     }
     write_next_seq_can_msg_fd(cantx_hnd, seqnum);
     write_next_seq_can_msg(cantx_hnd, seqnum);
-    stat = canWriteSync(cantx_hnd, (seqnum << 2) & 0x1ff0);
+    stat = canWriteSync(cantx_hnd, (seqnum << 2) & 0x3f0);
     check("canWriteSync", stat);
   }
 
