@@ -92,7 +92,7 @@ write_next_seq_can_msg(int hnd, unsigned int sn)
 {
   int stat;
   int dlc;
-  unsigned int id = sn << 4;
+  unsigned int id = sn << 2;
   unsigned char msg[8];
   int i;
 
@@ -122,11 +122,14 @@ write_next_seq_can_msg_fd(int hnd, unsigned int sn)
 {
   int stat;
   int dlc;
-  unsigned int id = sn << 4;
+  unsigned int id = sn << 2;
   unsigned char msg[64];
   int i;
 
   dlc = canfd_dlc_list[sn & 0xf];
+
+  if (dlc > 64)
+    dlc = 64;
 
   msg[0] = (sn >> 0) & 0xff;
   msg[1] = (sn >> 8) & 0xff;
@@ -332,16 +335,20 @@ int main(int argc, char** argv)
 
   while (1) {
     seqnum++;
-    if (!(seqnum & 0x3)) {
+    write_next_seq_can_msg_fd(cantx_hnd, seqnum);
+
+    write_next_seq_can_msg(cantx_hnd, seqnum);
+
+    if (!(seqnum & 0x7)) {
+      stat = canWriteSync(cantx_hnd, ((seqnum << 2) & 0x3f0) | 1);
+      if (stat < 0) fprintf(stderr, "failed ID 0x%x ", seqnum << 2);
+      check("canWriteSync", stat);
+
       struct timespec wait_time;
-      wait_time.tv_nsec = 100 * 1000*1000;
+      wait_time.tv_nsec = 10 * 1000*1000;
       wait_time.tv_sec = 0;
       clock_nanosleep(CLOCK_MONOTONIC, 0 * TIMER_ABSTIME, &wait_time, NULL);
     }
-    write_next_seq_can_msg_fd(cantx_hnd, seqnum);
-    write_next_seq_can_msg(cantx_hnd, seqnum);
-    stat = canWriteSync(cantx_hnd, (seqnum << 2) & 0x3f0);
-    check("canWriteSync", stat);
   }
 
   can_bus_cleanup();
